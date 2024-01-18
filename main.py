@@ -118,63 +118,69 @@ create_ball(balls)
 
 angle_ball = 0
 # Основной цикл
-while True:
-    for event in py.event.get():
-        if event.type == py.QUIT:  # закрытие игры крестиком
-            exit()
 
-        if event.type == py.USEREVENT:
-            create_ball(balls)
+async def main():
+    global catchaer_offset
+    global catcher
 
-    keys = py.key.get_pressed()
-    if keys[py.K_LEFT]:
-        catcher_rect.x -= catcher_speed
-        catcher = catcher_l  # переключение спрайтов направления вратаря
-        catchaer_offset = -catcher_speed // 5
-        if catcher_rect.x < 0:
-            catcher_rect.x = 0
-    elif keys[py.K_RIGHT]:
-        catcher_rect.x += catcher_speed
-        catcher = catcher_r
-        catchaer_offset = catcher_speed // 5
-        if catcher_rect.x > WIDTH - catcher_rect.width:
-            catcher_rect.x = WIDTH - catcher_rect.width
+    while True:
+        for event in py.event.get():
+            if event.type == py.QUIT:  # закрытие игры крестиком
+                exit()
 
-    if catcher_rect.x < 0 or catcher_rect.x > WIDTH - catcher_rect.width:
-        catchaer_offset = 0
-    catcher_rect.x += catchaer_offset
+            if event.type == py.USEREVENT:
+                create_ball(balls)
 
-    if game_score > 1000 and game_score <= 2000:
-        difficult_up(5)
-    elif game_score > 2000 and game_score <= 3000:
-        difficult_up(3)
-    elif game_score > 3000:
-        difficult_up(1)
+        keys = py.key.get_pressed()
+        if keys[py.K_LEFT]:
+            catcher_rect.x -= catcher_speed
+            catcher = catcher_l  # переключение спрайтов направления вратаря
+            catchaer_offset = -catcher_speed // 5
+            if catcher_rect.x < 0:
+                catcher_rect.x = 0
+        elif keys[py.K_RIGHT]:
+            catcher_rect.x += catcher_speed
+            catcher = catcher_r
+            catchaer_offset = catcher_speed // 5
+            if catcher_rect.x > WIDTH - catcher_rect.width:
+                catcher_rect.x = WIDTH - catcher_rect.width
 
-    collide_balls()  # сначала контролируем столкновение потом прорисовываем картинку
-    gate_goal()  # вывод пропущеных голов
+        if catcher_rect.x < 0 or catcher_rect.x > WIDTH - catcher_rect.width:
+            catchaer_offset = 0
+        catcher_rect.x += catchaer_offset
 
-    # Отрисовка всех поверхностей
-    screen.blit(background, (0, 0))
-    screen.blit(score, (0, 0))
-    screen.blit(game_goals_img, (WIDTH - 100, 0))
+        if game_score > 1000 and game_score <= 2000:
+            difficult_up(5)
+        elif game_score > 2000 and game_score <= 3000:
+            difficult_up(3)
+        elif game_score > 3000:
+            difficult_up(1)
 
-    # вывод очков
-    screen_text = f.render(str(game_score), True, (0, 0, 0))
-    screen.blit(screen_text, (20, 50))
-    # вывод пропущеных голов
-    screen_text = f.render(str(game_goals), True, (0, 0, 0))
-    screen.blit(screen_text, (WIDTH - 50, 50))
+        collide_balls()  # сначала контролируем столкновение потом прорисовываем картинку
+        gate_goal()  # вывод пропущеных голов
 
-    balls.draw(screen)
-    screen.blit(catcher, catcher_rect)
-    screen.blit(gate, (0, HEIGHT - 10))
-    py.display.update()
+        # Отрисовка всех поверхностей
+        screen.blit(background, (0, 0))
+        screen.blit(score, (0, 0))
+        screen.blit(game_goals_img, (WIDTH - 100, 0))
 
-    # Основной код
-    balls.update(HEIGHT)
+        # вывод очков
+        screen_text = f.render(str(game_score), True, (0, 0, 0))
+        screen.blit(screen_text, (20, 50))
+        # вывод пропущеных голов
+        screen_text = f.render(str(game_goals), True, (0, 0, 0))
+        screen.blit(screen_text, (WIDTH - 50, 50))
 
-    game_over()
-    clock.tick(FPS)  # 60 кадров в секунду
+        balls.draw(screen)
+        screen.blit(catcher, catcher_rect)
+        screen.blit(gate, (0, HEIGHT - 10))
+        py.display.update()
 
-# Дописать направление падения вратяря
+        # Основной код
+        balls.update(HEIGHT)
+
+        game_over()
+        clock.tick(FPS)  # 60 кадров в секунду
+        await asyncio.sleep(0)
+
+asyncio.run(main())
