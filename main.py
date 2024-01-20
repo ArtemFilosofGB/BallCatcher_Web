@@ -5,6 +5,7 @@ from random import randint
 from constpygame import *
 
 img_path="/data/data/org.afilosof.ballcatcker/files/app/"
+img_path=""
 class Ball(pygame.sprite.Sprite):
     def __init__(self,x, speed_fall, surf,score, group):
         pygame.sprite.Sprite.__init__(self)
@@ -82,7 +83,7 @@ RGB = (255, 255, 255)
 # Screen
 screen = py.display.set_mode((WIDTH, HEIGHT))
 py.display.set_caption("Pygame game game")
-py.display.set_icon(py.image.load(img_path + "img/icon.bmp"))
+#py.display.set_icon(py.image.load(img_path + "img/icon.bmp"))
 screen.fill(WHITE)
 # Do init here
 # Load any assets right now to avoid lag at runtime or network errors.
@@ -128,7 +129,7 @@ RGB = (255, 255, 255)
 
 screen = py.display.set_mode((WIDTH, HEIGHT))
 py.display.set_caption("Pygame game game")
-py.display.set_icon(py.image.load(img_path + "img/icon.bmp"))
+
 
 background = py.image.load((img_path + "img/sky.png")).convert()
 background = py.transform.scale(background, (WIDTH, HEIGHT))  # масштабирование фона
