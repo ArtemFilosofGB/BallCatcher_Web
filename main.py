@@ -1,265 +1,266 @@
-import asyncio
 import pygame as py
-import pygame
 from random import randint
-from constpygame import *
+import asyncio
+from menu_prim import *
 
-img_path="/data/data/org.afilosof.ballcatcker/files/app/"
-img_path=""
-class Ball(pygame.sprite.Sprite):
-    def __init__(self,x, speed_fall, surf,score, group):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = surf
-        self.image = pygame.transform.scale(self.image, (100, 100))
-        #self.image.set_colorkey((255, 255, 255))
-        self.rect = self.image.get_rect(center=(x, 0))
-        self.speed = speed_fall
-        self.score = score
-        self.add(group)
-
-
-    def update(self,*args):
-        if self.rect.y < args[0]-20:
-            self.rect.y+=self.speed
-        else:
-            self.kill()
-        # Вращение мяча
-
-def create_ball(group):
-    indx = randint(0, len(ball_surf) - 1)
-    x = randint(20, WIDTH - 20)
-    speed = randint(1, 4)
-#    s_kick.play()
-
-    return Ball(x, speed, ball_surf[indx], balls_data[indx]['scope'], group)
-# Try to declare all your globals at once to facilitate compilation later.
-
-
-def collide_balls():
-    global game_score
-    for ball in balls:
-        if catcher_rect.collidepoint(
-                ball.rect.center):  # пересечение: координата центра мяча ball.rect.center, прямоугольник вратаря
-            #s_catch.play()
-            game_score += ball.score
-            ball.kill()
-
-
-def gate_goal():
-    global game_goals
-    for ball in balls:
-        if gate_rect.collidepoint(
-                ball.rect.center):  # пересечение: координата центра мяча ball.rect.center, прямоугольник вратаря
-            game_goals += 1
-            print("Goals: ", game_goals)
-            ball.kill()
-
-
-def difficult_up( new_catcher_speed: int):
-    global catcher_speed
-    catcher_speed = new_catcher_speed
-
-
-def game_over():
-    global game_score
-    if game_goals == 3:
-        py.mixer.music.stop()
-        
-        screen.blit(game_goals_img, (WIDTH // 2 - 50, HEIGHT // 2 - 50))
-        print("Game over")
-        game_score = "GAME OVER"
-
-        py.quit()
-        exit()
-
-#py.mixer.pre_init(44100, -16, 1, 512)  # инициализация до py.init()
-
+py.mixer.pre_init(44100, -16, 1, 512)  # инициализация до py.init()
 py.init()
 
+laser_sound = py.mixer.Sound("sounds/laser_gun.mp3")
+laser_sound.set_volume(0.05)
 
-clock = py.time.Clock()
-FPS = 60
-RGB = (255, 255, 255)
-# Screen
-screen = py.display.set_mode((WIDTH, HEIGHT))
-py.display.set_caption("Pygame game game")
-#py.display.set_icon(py.image.load(img_path + "img/icon.bmp"))
-screen.fill(WHITE)
-# Do init here
-# Load any assets right now to avoid lag at runtime or network errors.
-surf = py.Surface((WIDTH, 200))
-bita = py.Surface((50, 50))
+shot_sound = py.mixer.Sound("sounds/shot.mp3")
+shot_sound.set_volume(0.5)
 
-ball = py.image.load(img_path + "img/ball.png")
-ball = py.transform.scale(ball, (100, 100))
-ball_rect = ball.get_rect()
-
-py.mixer.music.load(img_path + "sounds/marsh.mp3")
-py.mixer.music.play(1, 0, 0)
-py.mixer.music.set_volume(0.3)
-
-
-
-surf.fill(BLUE)
-bita.fill(RED)
-bita.set_alpha(0)
-
-bx, by = 0, 150
-x, y = 0, 0
-
-
-
-py.time.set_timer(py.USEREVENT, 2000)
-
-
-#s_catch = py.mixer.Sound("sounds/arena.wav")
-
-#s_kick = py.mixer.Sound("sounds/kick.mp3")
+move_sound = py.mixer.Sound("sounds/move.mp3")
+move_sound.set_volume(0.5)
+#move_sound.fadeout(500)
 
 WIDTH, HEIGHT = 800, 600
-
-WHITE = (255, 255, 255)
-BLUE = (0, 0, 255)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
-
-clock = py.time.Clock()
 FPS = 60
-RGB = (255, 255, 255)
+# Screen and caption
+window = py.display.set_mode((WIDTH, HEIGHT))
+clock = py.time.Clock()
+py.display.set_caption("SpaceGun")
 
-screen = py.display.set_mode((WIDTH, HEIGHT))
-py.display.set_caption("Pygame game game")
+font=py.font.SysFont("", 25)
+gunPX, gunPY = WIDTH // 2, HEIGHT - 30
 
+class Bullet:
+    def __init__(self, x, y, speed):
+        self.px = x
+        self.py = y
+        self.speed = speed
+        bullets.append(self)
 
-background = py.image.load((img_path + "img/sky.png")).convert()
-background = py.transform.scale(background, (WIDTH, HEIGHT))  # масштабирование фона
+    def update(self):
+        global scores
+        self.py -= self.speed
+        if self.py < 0:
+            bullets.remove(self)
+        for target in targets:
+            if target.rect.collidepoint(self.px,self.py):
+                targets.remove(target)
+                bullets.remove(self)
+                scores+=1
 
-score = py.image.load(img_path + "img/field.jpg").convert_alpha()
-score = py.transform.scale(score, (100, 100))
-f = py.font.SysFont("Verdana", 30)
-
-game_goals_img = py.image.load(img_path + "img/field.jpg").convert_alpha()
-game_goals_img = py.transform.scale(game_goals_img, (100, 100))
-
-gate = py.Surface((WIDTH, 10))
-gate.fill((0, 0, 0))
-gate.set_alpha(100)  # прозрачность
-gate_rect = gate.get_rect(topleft=(0, HEIGHT - 10))
-
-balls_data = ({'path': 'ball.png', 'scope': 100},
-            {'path': 'ball2.png', 'scope': 150},
-            {'path': 'ball3.png', 'scope': 200})
-
-ball_surf = [py.image.load('img/' + data['path']).convert_alpha() for data in balls_data]
-
-balls = py.sprite.Group()  # создание группы спрайтов для совместного управления
-
-# вратарь
-catcher = py.image.load("img/catcher.png").convert_alpha()
-catcher = py.transform.scale(catcher, (200, 200))
-catcher_rect = catcher.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 150))
-
-catcher_l = catcher
-catcher_r = py.transform.flip(catcher, True, False)
-
-game_score = 0  # игровой счёт
-game_goals = 0  # счётчик пропущеных голов
-
-catcher_speed = 10  # скорость вратаря
-catchaer_offset = 0
-
-create_ball(balls)
-
-angle_ball = 0
+    def draw(self):
+        py.draw.circle(window, py.Color("yellow"), (self.px, self.py), 5)
 
 
-py.display.update()
+class Target:
+    def __init__(self):
+        global scores
+        self.px = randint(0, WIDTH-30)
+        self.py = randint(0, 10)
+        self.speed = 1+randint(0, 5)+scores/10
+        self.rect = py.Rect(self.px, self.py, 30, 30)
+        targets.append(self)
 
+    def update(self):
+        global scores
+        self.py += self.speed
+        self.rect.y = self.py
+        if self.rect.top > HEIGHT:
+            targets.remove(self)
+
+
+    def draw(self):
+        py.draw.rect(window, py.Color("Green"), self.rect)
+
+class Sky:
+    def __init__(self, x=0, y=0):
+        self.px = x+randint(0, WIDTH)
+        self.py = y+randint(0,HEIGHT-100)
+        self.speed = 1
+        self.rect = py.Rect(self.px, self.py, 10, 10)
+        skys.append(self)
+
+    def update(self):
+        global mousePX
+        global gunPX
+        self.py += self.speed
+        self.rect.y = self.py
+        self.rect.x += (mousePX - gunPX) / 30
+        if self.rect.top > HEIGHT:
+            skys.remove(self)
+
+    def draw(self):
+        py.draw.rect(window, py.Color("Blue"), self.rect, 1)
+
+class Star:
+    def __init__(self):
+        self.px = randint(0, WIDTH)
+        self.py = randint(0,HEIGHT-100)
+        self.speed = 0.5
+        self.rect = py.Rect(self.px, self.py, 5, 5)
+        stars.append(self)
+
+    def update(self):
+        global mousePX
+        global gunPX
+        self.py += self.speed
+        self.rect.y = self.py
+        self.rect.x += (mousePX - gunPX) / 50
+        if self.rect.top > HEIGHT:
+            stars.remove(self)
+
+    def draw(self):
+        py.draw.rect(window, py.Color("White"), self.rect, 1)
+
+class Gun:
+    def __init__(self, gunPX):
+        self.px = gunPX
+        self.py = HEIGHT - 30
+        self.life = 3
+        self.rect = py.Rect(self.px-20, self.py, 40, 20)
+
+    def update(self):
+        global mousePX
+        global play
+        self.px += (mousePX - self.px) / 10
+        if (self.px - mousePX)/10>10:
+            move_sound.play()
+
+        for target in targets:
+            if target.rect.collidepoint(gun.px, gun.py):
+                targets.remove(target)
+                gun.life -= 1
+                shot_sound.play()
+        if gun.life == 0:
+            play = False
+
+    def draw(self):
+        py.draw.rect(window, py.Color("Blue"), (self.px-20, self.py, 40, 20))
+        py.draw.line(window, py.Color("red"), (self.px, self.py), (self.px, self.py - 10), 20)
+
+
+gunPX, gunPY = WIDTH // 2, HEIGHT - 30
+gun = Gun(gunPX) # создание пушки
+bullets = []
+targets = []
+skys = [] # Звёздное небо
+stars = [] # Звейзды
+bc=0 #backgroung correction
+mousePX, mousePY = py.mouse.get_pos()
+difficult=1
+timer=60
+scores=0
+play_fl = False
 async def main():
-    global COUNT_DOWN
-    global bx, by, x, y
-    global catchaer_offset
-    global catcher
-    # avoid this kind declaration, prefer the way above
+    global gunPX, gunPY, gun, bullets, targets, skys, stars
+    global play
+    global difficult
+    global timer
+    global scores
+    global bc
+    global gunPX
+    global gunPY
+    global mousePX, mousePY
+    global play_fl
 
-
-    while True:
+    #начало игры - меню
+    while play_fl == False:
         for event in py.event.get():
             if event.type == py.QUIT:  # закрытие игры крестиком
                 exit()
 
-            if event.type == py.USEREVENT:
-                create_ball(balls)
+        #меню
+        button1 = Button(window, 100, HEIGHT // 7, WIDTH - 200, HEIGHT // 7, "Старт")
+        button2 = Button(window, 100, 3 * HEIGHT // 7, WIDTH - 200, HEIGHT // 7, "Правила")
+        button3 = Button(window, 100, 5 * HEIGHT // 7, WIDTH - 200, HEIGHT // 7, "Выход")
+        btn_list = [button1, button2, button3]
+        window.fill(py.Color("Black"))
+        for button in btn_list:
+            button.draw(window)
 
-        keys = py.key.get_pressed()
-        if keys[py.K_LEFT]:
-            catcher_rect.x -= catcher_speed
-            catcher = catcher_l  # переключение спрайтов направления вратаря
-            catchaer_offset = -catcher_speed // 5
-            if catcher_rect.x < 0:
-                catcher_rect.x = 0
-        elif keys[py.K_RIGHT]:
-            catcher_rect.x += catcher_speed
-            catcher = catcher_r
-            catchaer_offset = catcher_speed // 5
-            if catcher_rect.x > WIDTH - catcher_rect.width:
-                catcher_rect.x = WIDTH - catcher_rect.width
-        elif keys[py.K_ESCAPE] or keys[py.K_q]:
+        if button1.rect.collidepoint(py.mouse.get_pos()) and event.type == py.MOUSEBUTTONDOWN:
+            play_fl = True
+        if button2.rect.collidepoint(py.mouse.get_pos()):
+            rulls_text = "Space Gun v1.1\n"
+            rulls_text+=("Правила игры:\nТы космический пистолет\nТвоя цель выжить в небе\nполном опссности\n")
+            rulls_text+=("Твоя задача - стрелять по мишеням\n")
+            rulls_text+=("У тебя есть 3 жизни\n")
+            rulls_text+=("Твоя цель - выжить в небе\n")
+            rulls_text+=("Твоя цель - выжить в небе нисмотря ни на что!\n")
+            rulls_font = py.font.SysFont(None, 50)
+            button2.draw_multiline_text( rulls_text, (10, 10), rulls_font, M_RED)
+        if button3.rect.collidepoint(py.mouse.get_pos()) and event.type == py.MOUSEBUTTONDOWN:
+            print("Выход")
             exit()
-
-        if catcher_rect.x < 0 or catcher_rect.x > WIDTH - catcher_rect.width:
-            catchaer_offset = 0
-        catcher_rect.x += catchaer_offset
-
-        if game_score > 1000 and game_score <= 2000:
-            difficult_up(5)
-        elif game_score > 2000 and game_score <= 3000:
-            difficult_up(3)
-        elif game_score > 3000:
-            difficult_up(1)
-
-        collide_balls()  # сначала контролируем столкновение потом прорисовываем картинку
-        gate_goal()  # вывод пропущеных голов
-
-        # Отрисовка всех поверхностей
-        screen.blit(background, (0, 0))
-        screen.blit(score, (0, 0))
-        screen.blit(game_goals_img, (WIDTH - 100, 0))
-
-        # вывод очков
-        screen_text = f.render(str(game_score), True, (0, 0, 0))
-        screen.blit(screen_text, (20, 50))
-        # вывод пропущеных голов
-        screen_text = f.render(str(game_goals), True, (0, 0, 0))
-        screen.blit(screen_text, (WIDTH - 50, 50))
-
-        balls.draw(screen)
-        screen.blit(catcher, catcher_rect)
-        screen.blit(gate, (0, HEIGHT - 10))
         py.display.update()
+        clock.tick(FPS)
 
-        # Основной код
-        balls.update(HEIGHT)
-        game_over()
-        clock.tick(FPS)  # 60 кадров в секунду
-        # Do your rendering here, note that it's NOT an infinite loop,
-        # and it is fired only when VSYNC occurs
-        # Usually 1/60 or more times per seconds on desktop
-        # could be less on some mobile devices
+    #Логика игры
+    while play_fl:
+        for event in py.event.get():
+            if event.type == py.QUIT:
+                play = False
+                play_fl = False
+        # создание мыши
+        mousePX, mousePY = py.mouse.get_pos()
+        # кнопки мыши
+        b1, b2, b3 = py.mouse.get_pressed()
+
+        # плавное смещение пушки
+        #gun.px += (mousePX - gun.px) / 10
+        gun.update()
 
 
-        # pygame.display.update() should go right next line
+        if timer>0 and timer<10+difficult:
+            if b1:
+                b = Bullet(gun.px, gun.py, 10)
+                laser_sound.play()
+            #плавное смещение цели увеличение сложности
+            if scores > 10:
 
-        await asyncio.sleep(0)  # Very important, and keep it 0
+                for target in targets:
+                    if target.rect.y > HEIGHT // 2 and (target.rect.x - gun.px)>30:
+                        target.rect.x -= (target.rect.x - gun.px) // scores // 10
+                    else:
+                        target.rect.x += (gun.px - target.rect.x) / 30
+        if scores//difficult*10>100+difficult*10:
+            difficult+=1
+        if difficult>29:
+            difficult=29
+        if timer>0:
+            timer-=1 #счётчик времени
+        else:
+            t = Target()
+            s = Sky(50,50)
+            st = Star()
+            timer=randint(0,30-difficult)
 
-        # if not COUNT_DOWN:
-        #     return
-        #
-        # COUNT_DOWN = COUNT_DOWN - 1
 
-# This is the program entry point:
+        # обновление позиции
+        # отработка столкновений
+        for bullet in bullets: bullet.update()
+        for target in targets: target.update()
+        for sky in skys:sky.update()
+        for star in stars: star.update()
+
+        window.fill((bc,bc,bc))
+
+        # отрисовка пушки
+        gun.draw()
+        # отрисовка звейзд
+        for star in stars: star.draw()
+        # отрисовка неба
+        for sky in skys: sky.draw()
+        # отрисовка пуль
+        for bullet in bullets: bullet.draw()
+        # отрисовка целей
+        for target in targets: target.draw()
+
+        # отрисовка счета
+        text=font.render(f"Score: {scores}", True, py.Color("white"))
+        text_life=font.render(f"Life: {gun.life}", True, py.Color("white"))
+        text_difficult=font.render(f"Difficult: {difficult}", True, py.Color("white"))
+        window.blit(text, (10, 10))
+        window.blit(text_life, (10, 30))
+        window.blit(text_difficult, (10, 50))
+        py.display.update()
+        clock.tick(FPS)
+        await asyncio.sleep(0)
+#py.quit()
 asyncio.run(main())
-
-# Do not add anything from here, especially sys.exit/pygame.quit
-# asyncio.run is non-blocking on pygame-wasm and code would be executed
-# right before program start main()
